@@ -1,7 +1,10 @@
 package client
 
 import (
+	"time"
+	"crypto/tls"
 	"k8s.io/klog"
+	"github.com/jwzl/wssocket/model"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -11,42 +14,78 @@ const (
 )
 
 type Client struct {
+	// scheme://host:port
+	// Where "scheme" is one of "tcp", "ssl", or "ws", "host" is the ip-address (or hostname)
+	// and "port" is the port on which the broker is accepting connections.
 	Host			string
+	User, Passwd	string
+	// the client id to be used by this client when
+	// connecting to the MQTT broker.
 	ClientID		string
-	keepAliveInterval int64
-	PingTimeout		  int64	
-
+	// the amount of time (in seconds) that the client
+	// should wait before sending a PING request to the broker.
+	// default as 120s.
+	keepAliveInterval time.Duration
+	// the amount of time (in seconds) that the client
+	// will wait after sending a PING request to the broker.
+	// default as 120s 
+	PingTimeout		  time.Duration
+	//the state of client.
 	State 			string	
 	// tls config
 	tlsConfig 		*tls.Config
 	client  		*MQTTClient
 }
 
-func NewClient() *Client{
+func NewClient(host, user, passwd, clientID string) *Client{
+	if host == "" || clientID == "" {
+		return nil
+	}
+
 	client := &Client{
+		Host:  host,
+		User: user,
+		Passwd: passwd,
+		ClientID: clientID,
+		keepAliveInterval: 120 * time.Second,
+		PingTimeout: 120 * time.Second,		
 		State: MQTT_CLIENT_DISCONNECTED,
 	}
-
-	// Create mqtt client.
-	c := &MQTTClient{
-		Host:			client.Host,
-		ClientID:		client.ClientID,
-		keepAliveInterval:	client.keepAliveInterval,
-		PingTimeout:		client.PingTimeout,			
-		CleanSession:	true,
-		FileStorePath: "memory",
-		OnConnect:	client.ClientOnConnect,
-		OnLost:		client.ClientOnLost,			
-		WillTopic:		"",			//no will topic.	
-		TLSConfig:		client.tlsConfig,  
-	}
-
-	client.client = c
 
 	return client 
 }
 
+func (c *Client) SetkeepAliveInterval(k time.Duration) {
+	c.keepAliveInterval = k
+}
+
+func (c *Client) SetPingTimeout(k time.Duration) {
+	c.PingTimeout = k
+}
+
+func (c *Client) SetTlsConfig (config *tls.Config) {
+	c.tlsConfig = config
+}
+
 func (c *Client) Start(){
+	// Create mqtt client.
+	client := &MQTTClient{
+		Host:			c.Host,
+		User:			c.User,
+		Passwd:			c.Passwd,	
+		ClientID:		c.ClientID,
+		keepAliveInterval:	c.keepAliveInterval,
+		PingTimeout:		c.PingTimeout,			
+		CleanSession:	true,
+		FileStorePath: "memory",
+		OnConnect:	c.ClientOnConnect,
+		OnLost:		c.ClientOnLost,			
+		WillTopic:		"",			//no will topic.	
+		TLSConfig:		c.tlsConfig,  
+	}
+
+	c.client = client
+
 	//Start the mqtt client
 	c.client.Start()
 
@@ -56,6 +95,20 @@ func (c *Client) Start(){
 	}
 
 	klog.Infof("Client connecte Successful")
+}
+
+func CreateTLSConfig(certFile, keyFile string) (*tls.Config, error) {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		InsecureSkipVerify: true,
+	}
+
+	return tlsConfig, nil
 }
 
 func (c *Client) Publish(topic string, msg *model.Message) error {

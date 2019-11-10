@@ -1,17 +1,23 @@
 package client
 
 import (
+	"time"
+	"errors"
+	"strings"
+	"crypto/tls"
 	"k8s.io/klog"
+	"github.com/jwzl/wssocket/model"
 	"github.com/jwzl/wssocket/translator"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 type MQTTClient struct{
 	Host			string
+	User, Passwd	string
 	ClientID		string
 	CleanSession 	bool
-	keepAliveInterval int64
-	PingTimeout		  int64	
+	keepAliveInterval time.Duration
+	PingTimeout		  time.Duration	
 	// optinal as below.
 	OnConnect		mqtt.OnConnectHandler
 	OnLost			mqtt.ConnectionLostHandler
@@ -36,8 +42,8 @@ func (mc *MQTTClient) Start() {
 	opts.AddBroker(mc.Host)
 	opts.SetClientID(mc.ClientID)
 
-	opts.SetUsername(user)
-	opts.SetPassword(password)
+	opts.SetUsername(mc.User)
+	opts.SetPassword(mc.Passwd)
 
 	opts.SetCleanSession(mc.CleanSession)
 	if mc.TLSConfig != nil {
@@ -82,7 +88,7 @@ func (mc *MQTTClient) Connect() error {
 func (mc *MQTTClient) Publish(topic string, qos byte, retained bool, msg *model.Message) error {
 	if msg == nil {
 		return errors.New("msg is nil")	
-	]
+	}
 	
 	if mc.client == nil {
 		return errors.New("nil client")
@@ -115,7 +121,7 @@ func (mc *MQTTClient) Subscribe(topic string, qos byte, fn func(msg *model.Messa
 		return errors.New("connection is not active")	
 	}  
 
-	callback = func (client mqtt.Client, message mqtt.Message) {
+	callback := func (client mqtt.Client, message mqtt.Message) {
 		msg := &model.Message{}
 		rawData := message.Payload()
 	
