@@ -125,7 +125,7 @@ func (c *Client) Publish(topic string, msg *model.Message) error {
 	return c.client.Publish(topic, 2, false, msg)
 }
 
-func (c *Client) Subscribe(topic string, fn func(msg *model.Message)) error {
+func (c *Client) Subscribe(topic string, fn func(topic string, msg *model.Message)) error {
 	return c.client.Subscribe(topic, 2, fn)
 }
 

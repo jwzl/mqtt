@@ -13,7 +13,7 @@ func main(){
 	//Start the mqtt client.
 	client.Start()
 
-	client.Subscribe("mqtt/edgeon/read/me", func(msg *model.Message){
+	client.Subscribe("mqtt/edgeon/read/me", func(topic string, msg *model.Message){
 
 		klog.Infof("message is arrived %v", msg)
 	})
