@@ -2,6 +2,7 @@ package client
 
 import (
 	"time"
+	"errors"
 	"crypto/tls"
 	"k8s.io/klog"
 	"github.com/jwzl/wssocket/model"
@@ -11,6 +12,8 @@ import (
 const (
 	MQTT_CLIENT_DISCONNECTED	= "Disconneted"
 	MQTT_CLIENT_CONNECTED	= "Conneted"
+	retryCount       = 5
+	cloudAccessSleep = 5 * time.Second
 )
 
 type Client struct {
@@ -67,7 +70,7 @@ func (c *Client) SetTlsConfig (config *tls.Config) {
 	c.tlsConfig = config
 }
 
-func (c *Client) Start(){
+func (c *Client) Start() error {
 	// Create mqtt client.
 	client := &MQTTClient{
 		Host:			c.Host,
@@ -89,12 +92,19 @@ func (c *Client) Start(){
 	//Start the mqtt client
 	c.client.Start()
 
-	if err := c.client.Connect(); err != nil {
-		klog.Infof("Client connecte err (%v)", err)
-		return
+	for i := 0; i < retryCount; i++ {
+		err := c.client.Connect()
+		if err != nil {
+			klog.Errorf("Client connecte err (%v), retry...", err)
+		}else {
+			klog.Infof("Client connecte Successful")
+			return nil
+		}
+		time.Sleep(cloudAccessSleep)
 	}
 
-	klog.Infof("Client connecte Successful")
+	klog.Errorf("max retry count reached when connecting to cloud")
+	return errors.New("max retry count reached when connecting to cloud")
 }
 
 func CreateTLSConfig(certFile, keyFile string) (*tls.Config, error) {
