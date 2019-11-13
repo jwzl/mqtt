@@ -62,7 +62,7 @@ func NewClient(host, user, passwd, clientID string) *Client{
 		PingTimeout: 120 * time.Second,		
 		State: MQTT_CLIENT_DISCONNECTED,
 		MessageCacheDepth : 100,
-		QOS:		2,
+		QOS:		byte(2),
 		Retain:		false,	
 	}
 
