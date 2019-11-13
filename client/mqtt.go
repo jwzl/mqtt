@@ -18,6 +18,7 @@ type MQTTClient struct{
 	CleanSession 	bool
 	keepAliveInterval time.Duration
 	PingTimeout		  time.Duration	
+	MessageChannelDepth uint
 	// optinal as below.
 	OnConnect		mqtt.OnConnectHandler
 	OnLost			mqtt.ConnectionLostHandler
@@ -65,6 +66,7 @@ func (mc *MQTTClient) Start() {
 	}
 	opts.SetKeepAlive(mc.keepAliveInterval)
 	opts.SetPingTimeout(mc.PingTimeout)
+	opts.SetMessageChannelDepth(mc.MessageChannelDepth)
 
 	// Create mqtt client.
 	client := mqtt.NewClient(opts)

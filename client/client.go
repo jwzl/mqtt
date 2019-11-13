@@ -33,6 +33,14 @@ type Client struct {
 	// will wait after sending a PING request to the broker.
 	// default as 120s 
 	PingTimeout		  time.Duration
+	//the size of the internal queue that holds messages while the
+    // client is temporairily offline.
+	MessageCacheDepth  uint
+	//0: QOSAtMostOnce, 1: QOSAtLeastOnce, 2: QOSExactlyOnce.
+	QOS				   byte
+	//if the flag set true, server will store the message and 
+	//can be delivered to future subscribers.
+	Retain			   bool	
 	//the state of client.
 	State 			string	
 	// tls config
@@ -53,6 +61,9 @@ func NewClient(host, user, passwd, clientID string) *Client{
 		keepAliveInterval: 120 * time.Second,
 		PingTimeout: 120 * time.Second,		
 		State: MQTT_CLIENT_DISCONNECTED,
+		MessageCacheDepth : 100,
+		QOS:		2,
+		Retain:		false,	
 	}
 
 	return client 
@@ -69,6 +80,15 @@ func (c *Client) SetPingTimeout(k time.Duration) {
 func (c *Client) SetTlsConfig (config *tls.Config) {
 	c.tlsConfig = config
 }
+func (c *Client) SetQOS (qos byte) {
+	c.QOS = qos
+}
+func (c *Client) SetMessageCacheDepth(depth uint) {
+	c.MessageCacheDepth = depth
+}
+func (c *Client) SetRetain (ret bool) {
+	c.Retain = ret
+}
 
 func (c *Client) Start() error {
 	// Create mqtt client.
@@ -78,7 +98,8 @@ func (c *Client) Start() error {
 		Passwd:			c.Passwd,	
 		ClientID:		c.ClientID,
 		keepAliveInterval:	c.keepAliveInterval,
-		PingTimeout:		c.PingTimeout,			
+		PingTimeout:		c.PingTimeout,
+		MessageChannelDepth: c.MessageCacheDepth,			
 		CleanSession:	true,
 		FileStorePath: "memory",
 		OnConnect:	c.ClientOnConnect,
@@ -122,11 +143,11 @@ func CreateTLSConfig(certFile, keyFile string) (*tls.Config, error) {
 }
 
 func (c *Client) Publish(topic string, msg *model.Message) error {
-	return c.client.Publish(topic, 2, false, msg)
+	return c.client.Publish(topic, c.QOS, c.Retain, msg)
 }
 
 func (c *Client) Subscribe(topic string, fn func(topic string, msg *model.Message)) error {
-	return c.client.Subscribe(topic, 2, fn)
+	return c.client.Subscribe(topic, c.QOS, fn)
 }
 
 func (c *Client) Unsubscribe(topics string) error {
