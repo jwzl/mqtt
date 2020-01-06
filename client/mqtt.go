@@ -114,7 +114,7 @@ func (mc *MQTTClient) Publish(topic string, qos byte, retained bool, msg *model.
 
 //Subscribe
 // We Overide the function for the fn can process the model message.
-func (mc *MQTTClient) Subscribe(topic string, qos byte, fn func(topic string, msg *model.Message)) error {
+func (mc *MQTTClient) Subscribe(topic string, qos byte, fn func(tpc string, msg *model.Message)) error {
 	if mc.client == nil {
 		return errors.New("nil client")
 	}
@@ -133,7 +133,7 @@ func (mc *MQTTClient) Subscribe(topic string, qos byte, fn func(topic string, ms
 			return 
 		}
 
-		fn(topic, msg)
+		fn(message.Topic(), msg)
 	}
 	if token := mc.client.Subscribe(topic, qos, callback); token.Wait() && token.Error() != nil {
 		return token.Error()

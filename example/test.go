@@ -9,11 +9,11 @@ import (
 
 func main(){
 
-	client := client.NewClient("tcp://127.0.0.1:1883", "", "", "edgeNode1")
+	client := client.NewClient("tcp://172.21.73.155:1883", "", "", "edgeNode1")
 	//Start the mqtt client.
 	client.Start()
 
-	client.Subscribe("mqtt/edgeon/read/me", func(topic string, msg *model.Message){
+	client.Subscribe("mqtt/dgtwin/cloud/#", func(topic string, msg *model.Message){
 
 		klog.Infof("message is arrived %v", msg)
 	})
@@ -23,7 +23,7 @@ func main(){
 		now := time.Now().UnixNano() / 1e6
 		msg.BuildRouter("device", "", "twin", "twin", "Read")
 		msg.BuildHeader("12345", now)
-		client.Publish("mqtt/edgeon/read/me", msg)
+		client.Publish("mqtt/dgtwin/cloud/me", msg)
 
 		time.Sleep(2 *time.Second)
 	}
