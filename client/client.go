@@ -97,6 +97,7 @@ func (c *Client) Start() error {
 		User:			c.User,
 		Passwd:			c.Passwd,	
 		ClientID:		c.ClientID,
+		Order: 			false,	
 		keepAliveInterval:	c.keepAliveInterval,
 		PingTimeout:		c.PingTimeout,
 		MessageChannelDepth: c.MessageCacheDepth,			

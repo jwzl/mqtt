@@ -16,6 +16,7 @@ type MQTTClient struct{
 	User, Passwd	string
 	ClientID		string
 	CleanSession 	bool
+	Order		 	bool
 	keepAliveInterval time.Duration
 	PingTimeout		  time.Duration	
 	MessageChannelDepth uint
@@ -64,9 +65,14 @@ func (mc *MQTTClient) Start() {
 	if strings.Compare(mc.WillTopic, "") != 0{
 		opts.SetWill(mc.WillTopic, mc.WillMessage, mc.WillQOS, mc.WillRetained)
 	}
+	if mc.Order != false {
+		opts.SetOrderMatters(true)
+	}
+
 	opts.SetKeepAlive(mc.keepAliveInterval)
 	opts.SetPingTimeout(mc.PingTimeout)
 	opts.SetMessageChannelDepth(mc.MessageChannelDepth)
+	
 
 	// Create mqtt client.
 	client := mqtt.NewClient(opts)
