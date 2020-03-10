@@ -17,7 +17,7 @@ type MQTTClient struct{
 	ClientID		string
 	CleanSession 	bool
 	Order		 	bool
-	keepAliveInterval time.Duration
+	KeepAliveInterval time.Duration
 	PingTimeout		  time.Duration	
 	MessageChannelDepth uint
 	// optinal as below.
