@@ -69,7 +69,7 @@ func (mc *MQTTClient) Start() {
 		opts.SetOrderMatters(true)
 	}
 
-	opts.SetKeepAlive(mc.keepAliveInterval)
+	opts.SetKeepAlive(mc.KeepAliveInterval)
 	opts.SetPingTimeout(mc.PingTimeout)
 	opts.SetMessageChannelDepth(mc.MessageChannelDepth)
 	
